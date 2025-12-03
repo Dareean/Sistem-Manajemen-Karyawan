@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id             Int              @id @default(autoincrement())
+  employeeCode   String           @unique
+  fullName       String
+  email          String           @unique
+  phone          String?
+  department     String?
+  jobTitle       String?
+  baseSalary     Decimal          @default(0)
+  status         String           @default("ACTIVE")
+  hireDate       DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  userId         Int?             @unique
+  user           User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attendanceLogs AttendanceLog[]
+  payrollRuns    PayrollRun[]
+
+  @@index([department])
+}
+
+model AttendanceLog {
+  id             Int              @id @default(autoincrement())
+  employeeId     Int
+  attendanceDate DateTime
+  checkIn        DateTime?
+  checkOut       DateTime?
+  workHours      Float            @default(0)
+  overtimeHours  Float            @default(0)
+  status         String           @default("PRESENT")
+  notes          String?
+  createdAt      DateTime         @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, attendanceDate])
+  @@index([attendanceDate])
+}
+
+model PayrollRun {
+  id            Int           @id @default(autoincrement())
+  employeeId    Int
+  periodStart   DateTime
+  periodEnd     DateTime
+  totalHours    Float         @default(0)
+  overtimeHours Float         @default(0)
+  basePay       Decimal       @default(0)
+  overtimePay   Decimal       @default(0)
+  allowances    Decimal       @default(0)
+  deductions    Decimal       @default(0)
+  netPay        Decimal       @default(0)
+  status        String        @default("PENDING")
+  generatedAt   DateTime      @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([periodStart, periodEnd])
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  role         String    @default("EMPLOYEE")
+  employee     Employee?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([role])
+}
+
