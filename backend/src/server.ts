@@ -14,7 +14,29 @@ dotenv.config();
 const app = express();
 const port = Number(process.env.PORT) || 4000;
 
-app.use(cors());
+// CORS configuration untuk production
+const allowedOrigins = [
+  "http://localhost:5173", // Local development
+  "http://localhost:3000",
+  "https://sistem-manajemen-karyawan-seven.vercel.app", // Production Vercel
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests dengan no origin (mobile apps, Postman, etc)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 app.use(authenticate);
 
